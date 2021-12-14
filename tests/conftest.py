@@ -2,6 +2,7 @@ import sys
 import time
 from datetime import datetime
 
+import fastapi
 import freezegun
 import pytest
 import tenacity
@@ -40,18 +41,27 @@ def get_db():
 
 
 @pytest.fixture(scope="session")
-def test_client() -> TestClient:
+def app_() -> fastapi.FastAPI:
+    """
+    Cool pytest things:
+    We can create a fixture that will be used by all the tests
+    """
+    return app
+
+
+@pytest.fixture(scope="session")
+def test_client(app_) -> TestClient:
     """
     Cool pytest things:
     Client can be created once per a session saving us a lot in load times
     in case of unit tests also mocks can be added here with if the app was using a factory method
     and reset after each test
     """
-    yield TestClient(app)
+    yield TestClient(app_)
 
 
 @pytest.fixture
-def add_value(test_client, request):
+def add_value(test_client, request) -> dict[str, str]:
     payload = request.param
     response = test_client.post(
         "/",
@@ -96,7 +106,7 @@ def mock_sleep(mocker: pytest_mock.MockerFixture):
     scope="session",
     autouse=True,
 )
-def freeze_the_time():
+def freeze_the_time() -> datetime:
     """
     This is a session fixture that is autouse=True.
     This means that it will be executed for every test in the session.
@@ -111,7 +121,7 @@ def some_fixture_that_needs_other_fixture(
     get_db,
     test_client,
     bulk_insert_some_values,
-):
+) -> str:
     """
     Let's say we have a test that needs some other fixture.
     For example , we want to use the db and the test client.

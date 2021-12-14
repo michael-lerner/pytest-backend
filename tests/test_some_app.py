@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import httpx
 import pytest
 
 
@@ -187,6 +188,19 @@ async def test_async_route(test_client):
     and can call an async route we delagate the Async loop orechastration to pytest-asyncio
     """
     response = test_client.get("/async_route/")
+    assert response.status_code == 200
+    assert response.json() == 200
+
+
+@pytest.mark.asyncio
+async def test_async_another_way(app_):
+    """
+    Cool pytest things here:
+    1) So by using the pytest.mark.asyncio we can mark the test as async
+    So we can use AsyncClient from httpx pass it the app and really test the app in an Async way
+    """
+    async with httpx.AsyncClient(app=app_, base_url="http://test") as client:
+        response = await client.get("/async_route/")
     assert response.status_code == 200
     assert response.json() == 200
 
