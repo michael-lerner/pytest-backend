@@ -1,6 +1,6 @@
 import time
 
-__all__ = ['DB']
+__all__ = ["DB"]
 
 
 class DB:
@@ -16,12 +16,11 @@ class DB:
         return self._fake_db.get(id_)
 
     def get_all_values(self):
-        return [{'value': value, 'id': id_} for id_, value in self._fake_db.items()]
+        return [{"value": value, "id": id_} for id_, value in self._fake_db.items()]
 
     def some_long_running_task(self, sleep_time: int):
         time.sleep(sleep_time)
         return True
-
 
 
 fake_db = DB()

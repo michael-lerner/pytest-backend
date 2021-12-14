@@ -21,7 +21,9 @@ def test_client() -> TestClient:
 @pytest.fixture
 def add_value(test_client, request):
     payload = request.param
-    response = test_client.post('/', json={'value': payload['value'], 'id': payload['id']})
+    response = test_client.post(
+        "/", json={"value": payload["value"], "id": payload["id"]},
+    )
     assert response.status_code == 200
     yield payload
     response = test_client.delete(f'/{payload["id"]}')
@@ -32,8 +34,8 @@ def add_value(test_client, request):
 def bulk_insert_some_values(test_client) -> list[dict[str, str]]:
     payloads = []
     for value_and_id in range(10):
-        payload = {'value': str(value_and_id), 'id': str(value_and_id)}
-        response = test_client.post('/', json=payload)
+        payload = {"value": str(value_and_id), "id": str(value_and_id)}
+        response = test_client.post("/", json=payload)
         assert response.status_code == 200
         payloads.append(payload)
     yield payloads
@@ -45,12 +47,13 @@ def bulk_insert_some_values(test_client) -> list[dict[str, str]]:
 @pytest.fixture
 def mock_sleep(mocker: pytest_mock.MockerFixture):
     """
+    # https://pypi.org/project/pytest-mock/
     Cool pytest things:
     Mocks can be used as a fixture and yield also if you want you can add return value/sideaffect through params like
     in add_value.
     also the mock is reset after yield with resetall if needed
 
     """
-    _mock = mocker.patch('time.sleep', spec=time.sleep)
+    _mock = mocker.patch("time.sleep", spec=time.sleep)
     yield _mock
-    _mock.resetall()
+    mocker.resetall()

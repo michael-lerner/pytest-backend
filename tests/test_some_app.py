@@ -4,16 +4,12 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    argnames=['add_value'],
-    indirect=['add_value'],
+    argnames=["add_value"],
+    indirect=["add_value"],
     argvalues=[
-        (
-            {'id': '1', 'value': 'test1'},
-        ),
-        (
-            {'id': '2', 'value': 'test1'},
-        ),
-    ]
+        ({"id": "1", "value": "test1"},),
+        ({"id": "2", "value": "test1"},),
+    ],
 )
 def test_get_value(
     test_client,
@@ -28,11 +24,9 @@ def test_get_value(
     4) The fixture can also return a value
     5) As this fixture is indirect we can give it values from parameters
     """
-    response = test_client.get(
-        f'/{add_value["id"]}'
-    )
+    response = test_client.get(f'/{add_value["id"]}')
     assert response.status_code == 200
-    assert response.json() == add_value['value']
+    assert response.json() == add_value["value"]
 
 
 def test_get_values(test_client, bulk_insert_some_values):
@@ -47,9 +41,9 @@ def test_get_values(test_client, bulk_insert_some_values):
         ...
         This helps us not worry about side effects in tests
     """
-    response = test_client.get('/')
+    response = test_client.get("/")
     assert response.status_code == 200
-    assert response.json() == {'values': bulk_insert_some_values}
+    assert response.json() == {"values": bulk_insert_some_values}
 
 
 def test_delete_values(
@@ -60,19 +54,22 @@ def test_delete_values(
     Test that the values are deleted correctly
     """
     for payload in bulk_insert_some_values:
-        response = test_client.delete(
-            f'/{payload["id"]}'
-        )
+        response = test_client.delete(f'/{payload["id"]}')
         assert response.status_code == 200
-        assert response.json() == payload['id']
-        response = test_client.get(
-            f'/{payload["id"]}'
-        )
+        assert response.json() == payload["id"]
+        response = test_client.get(f'/{payload["id"]}')
         assert response.status_code == 404
 
 
 @pytest.mark.timeout(1)
-def test_long_running_task(mock_sleep, test_client):
+@pytest.mark.parametrize(
+    argnames="num_secs",
+    argvalues=[
+        1,
+        2,
+    ],
+)
+def test_long_running_task(mock_sleep, test_client, num_secs):
     """
     Test that the long running task is run correctly
     Cool pytest things here:
@@ -82,9 +79,11 @@ def test_long_running_task(mock_sleep, test_client):
 
     """
 
-    response = test_client.get('/long_running_task/', params={'num_secs': 4})
+    response = test_client.get("/long_running_task/", params={"num_secs": num_secs})
     assert response.status_code == 200
-    mock_sleep.assert_called_once_with(4)
+    mock_sleep.assert_called_once_with(
+        num_secs,
+    )  # you can see that the fixture reset the mock after each test
 
 
 def test_long_running_task_no_mock(test_client):
@@ -93,7 +92,7 @@ def test_long_running_task_no_mock(test_client):
     1) The mock is not used here and it is easy to mock or not mock something depending on the needs
     """
     start_time = time.time()
-    response = test_client.get('/long_running_task/', params={'num_secs': 1})
+    response = test_client.get("/long_running_task/", params={"num_secs": 1})
     end_time = time.time()
     assert response.status_code == 200
-    assert 1 < end_time - start_time, 'The task took less than 1 second'
+    assert 1 < end_time - start_time, "The task took less than 1 second"
