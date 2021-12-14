@@ -27,7 +27,7 @@ def test_basic_pytest_syntax():
     # this can be used also to document the test a bit for your future self or return let's say the error from the
     # response in an API call
     # Uncomment for failing test  # Uncomment for failing test
-    # assert {'1': "1"} == {'1': "2"}, 'Sets are not equal fatal bug!!!!!!!!'
+    # assert {'1', "1"} == {'1', "2"}, 'Sets are not equal fatal bug!!!!!!!!'
     """    
     AssertionError: Sets are not equal fatal bug!!!!!!!!
     assert {'1': '1'} == {'1': '2'}
@@ -132,9 +132,7 @@ def test_long_running_task(mock_sleep, test_client, num_secs):
     1) Can be added per a test and even per a Session and reset with yield
     2) pytest mark has loads of features like timeout , skip, xfail, async etc
     3) With pytest.mark.timeout you can validate easily that something mission critical is not taking too long
-
     """
-
     response = test_client.get("/long_running_task/", params={"num_secs": num_secs})
     assert response.status_code == 200
     mock_sleep.assert_called_once_with(
