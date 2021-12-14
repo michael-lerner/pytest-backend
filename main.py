@@ -10,12 +10,16 @@ db = database.fake_db
 app = fastapi.FastAPI()
 
 
-class ValueIn(pydantic.BaseModel):
+class ValueIn(
+    pydantic.BaseModel,
+):
     id: str
     value: str
 
 
-class AllValues(pydantic.BaseModel):
+class AllValues(
+    pydantic.BaseModel,
+):
     values: list[ValueIn]
 
 
