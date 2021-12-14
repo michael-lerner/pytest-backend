@@ -30,13 +30,12 @@ def test_basic_pytest_syntax():
     # assert {'1', "1"} == {'1', "2"}, 'Sets are not equal fatal bug!!!!!!!!'
     """    
     AssertionError: Sets are not equal fatal bug!!!!!!!!
-    assert {'1': '1'} == {'1': '2'}
-      Differing items:
-        {'1': '1'} != {'1': '2'}
-          Full diff:
-            - {'1': '2'}
-              ?        ^
-            + {'1': '1'}
+    assert {'1'} == {'1', '2'}
+      Extra items in the right set:
+      '2'
+      Full diff:
+      - {'1', '2'}
+      + {'1'}
     """
     # Lets say you really miss self.assertAlmostEqual from unittest great you have it here also
     # This will help you check the dreaded floats
