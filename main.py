@@ -73,3 +73,8 @@ async def async_route():
     async with httpx.AsyncClient() as client:
         response = await client.get("https://www.google.com/")
         return response.status_code
+
+
+@app.get("/this_route_has_some_thing_i_dont_want/", response_model=int)
+async def this_route_doesnt_do_what_i_want():
+    return 1

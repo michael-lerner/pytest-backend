@@ -1,13 +1,42 @@
-import asyncio
+import sys
 import time
 from datetime import datetime
 
 import freezegun
 import pytest
+import tenacity
 
 from main import app
+from database import fake_db
 from fastapi.testclient import TestClient
 import pytest_mock
+
+
+@pytest.fixture(scope="session", autouse=True)
+def get_db():
+    """
+    Let's say we want to initialize the db
+    and not run some python3 -m path_to_module.database.initialize_db() before the test every time,
+    and we want it also to run in CI. easier so let's do it here once per test.
+    See that we use it once per session, not once per test.
+    And we autouse it
+    """
+    for attempt in tenacity.Retrying(
+        wait=tenacity.wait.wait_fixed(
+            wait=0.001,
+        ),
+        retry=tenacity.retry_if_exception_type(
+            exception_types=RuntimeError,
+        ),
+        stop=tenacity.stop_after_attempt(
+            max_attempt_number=3,
+        ),
+        before_sleep=print("waiting for DB", file=sys.stderr),
+        reraise=True,
+    ):
+        with attempt:
+            fake_db.fake_initialize_db()
+            yield fake_db
 
 
 @pytest.fixture(scope="session")
@@ -75,3 +104,27 @@ def freeze_the_time():
     """
     with freezegun.freeze_time(datetime(2020, 1, 1, 0, 0, 0)) as frozen_time:
         yield frozen_time()
+
+
+@pytest.fixture
+def some_fixture_that_needs_other_fixture(
+    get_db,
+    test_client,
+    bulk_insert_some_values,
+):
+    """
+    Let's say we have a test that needs some other fixture.
+    For example , we want to use the db and the test client.
+    We can use the fixtures in the same order as we want.
+
+    Some real life example can be updated some value in the db
+    and then update another that needs that value to exist
+    """
+    get_db.add_value(
+        id_="extra_id",
+        value="extra_value",
+    )
+    yield "extra_id"
+    get_db.remove_value(
+        id_="extra_id",
+    )
