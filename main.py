@@ -1,4 +1,7 @@
+import datetime
+
 import fastapi
+import httpx
 import pydantic
 
 import database
@@ -58,3 +61,15 @@ def get_all_values():
 def long_running_task(num_secs: int):
     db.some_long_running_task(num_secs)
     return "Done"
+
+
+@app.get("/get_datetime_now/", response_model=str)
+def get_date() -> str:
+    return datetime.datetime.now().isoformat()
+
+
+@app.get("/async_route/", response_model=int)
+async def async_route():
+    async with httpx.AsyncClient() as client:
+        response = await client.get("https://www.google.com/")
+        return response.status_code

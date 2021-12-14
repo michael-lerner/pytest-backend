@@ -1,6 +1,8 @@
 import time
+from datetime import datetime
 
 import pytest
+import six
 
 
 @pytest.mark.parametrize(
@@ -91,8 +93,37 @@ def test_long_running_task_no_mock(test_client):
     Cool pytest things here:
     1) The mock is not used here and it is easy to mock or not mock something depending on the needs
     """
-    start_time = time.time()
     response = test_client.get("/long_running_task/", params={"num_secs": 1})
-    end_time = time.time()
     assert response.status_code == 200
-    assert 1 < end_time - start_time, "The task took less than 1 second"
+
+
+def test_show_auto_use(test_client):
+    """
+    Cool pytest things here:
+    1) As you can see freeze the time mock is auto used here and time is frozen
+    datetime.now() == the response
+    """
+    response = test_client.get("/get_datetime_now/")
+    assert response.status_code == 200
+    assert response.json() == datetime.now().isoformat()
+
+
+def test_show_auto_use_2(test_client, freeze_the_time):
+    """
+    We can also use the freeze_the_time fixture to get the value the fixture returns
+    """
+    response = test_client.get("/get_datetime_now/")
+    assert response.status_code == 200
+    assert response.json() == freeze_the_time.isoformat()
+
+
+@pytest.mark.asyncio
+async def test_async_route(test_client):
+    """
+    Cool pytest things here:
+    !) So by using the pytest.mark.asyncio we can mark the test as async
+    and can call an async route we delagate the Async loop orechastration to pytest-asyncio
+    """
+    response = test_client.get("/async_route/")
+    assert response.status_code == 200
+    assert response.json() == 200

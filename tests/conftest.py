@@ -1,5 +1,8 @@
+import asyncio
 import time
+from datetime import datetime
 
+import freezegun
 import pytest
 
 from main import app
@@ -22,7 +25,8 @@ def test_client() -> TestClient:
 def add_value(test_client, request):
     payload = request.param
     response = test_client.post(
-        "/", json={"value": payload["value"], "id": payload["id"]},
+        "/",
+        json={"value": payload["value"], "id": payload["id"]},
     )
     assert response.status_code == 200
     yield payload
@@ -57,3 +61,17 @@ def mock_sleep(mocker: pytest_mock.MockerFixture):
     _mock = mocker.patch("time.sleep", spec=time.sleep)
     yield _mock
     mocker.resetall()
+
+
+@pytest.fixture(
+    scope="session",
+    autouse=True,
+)
+def freeze_the_time():
+    """
+    This is a session fixture that is autouse=True.
+    This means that it will be executed for every test in the session.
+    Let's say we want to freeze time
+    """
+    with freezegun.freeze_time(datetime(2020, 1, 1, 0, 0, 0)) as frozen_time:
+        yield frozen_time()
