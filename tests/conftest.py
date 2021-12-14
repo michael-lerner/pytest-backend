@@ -29,7 +29,7 @@ def get_db():
             exception_types=RuntimeError,
         ),
         stop=tenacity.stop_after_attempt(
-            max_attempt_number=3,
+            max_attempt_number=7,
         ),
         before_sleep=print("waiting for DB", file=sys.stderr),
         reraise=True,

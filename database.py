@@ -13,7 +13,7 @@ class DB:
         This is somewhat like when docker-compose starting a DB
         """
         if self._fake_count != 5:
-            self._fake_count = 5
+            self._fake_count += 1
             raise RuntimeError("Fake DB is not started")
         return True
 
