@@ -41,6 +41,17 @@ def test_basic_pytest_syntax():
     # This will help you check the dreaded floats
     assert 2.2 == pytest.approx(2.3, 0.1), "OMG floats are not almost equal"
 
+    # also if you know something will fail you can use the pytest.raises to check if the exception is raised
+    with pytest.raises(ZeroDivisionError):
+        2 / 0
+
+    # You can also check get the exception itself
+    # note you will have excinfo after the with: block
+    with pytest.raises(ValueError) as excinfo:
+        raise ValueError("This is a custom message")
+
+    assert "This is a custom message" in str(excinfo.value)
+
 
 @pytest.mark.parametrize(
     argnames=["add_value"],
