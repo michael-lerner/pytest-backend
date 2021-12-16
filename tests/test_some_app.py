@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 import httpx
@@ -55,6 +56,61 @@ def test_basic_pytest_syntax():
 
 
 @pytest.mark.parametrize(
+    argnames="positive_number",
+    argvalues=[
+        1,
+        2,
+        3,
+        pytest.param(-4, marks=pytest.mark.xfail),
+        # -4 # uncomment failing test case
+    ],
+)
+def test_parametrize_positive_numbers(positive_number):
+    """
+    Cool Things about Pytest we can parametrize a test with different values
+    Each parameter is counted as a test case.
+    Each will run and fail also params can be marked with marks
+
+    """
+    assert positive_number > 0, f"This is a negative number {positive_number}"
+
+
+def test_get_values(test_client, bulk_insert_some_values):
+    """
+    Test that the values are returned correctly
+    Cool pytest things here:
+    1) New Test new setup unlike the unit test module that supports
+        def setUp(self):
+        and
+        @classmethod
+        def setUpClass(cls):
+        ...
+        This helps us not worry about side effects in tests
+    """
+    response = test_client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"values": bulk_insert_some_values}
+
+
+def test_get_value_with_fixture_parameterized(
+    test_client,
+    add_value_fixture_params,
+):
+    """
+    Test that the value is returned correctly
+    Cool pytest things here:
+    1) We can give it different parameters for each test
+    2) We can use the add_value fixture to add a value
+    3) add_value also cleans up the value after the test
+    4) The fixture can also return a value
+    5) As this fixture is indirect we can give it values from parameters
+    """
+    response = test_client.get(f'/{add_value_fixture_params["id"]}')
+    assert response.status_code == 200
+    assert response.json() == add_value_fixture_params["value"]
+
+
+@pytest.mark.parametrize(
     argnames=["add_value"],
     indirect=["add_value"],
     argvalues=[
@@ -80,21 +136,23 @@ def test_get_value(
     assert response.json() == add_value["value"]
 
 
-def test_get_values(test_client, bulk_insert_some_values):
+@pytest.mark.parametrize(
+    argnames=["delete_value"],
+    indirect=["delete_value"],
+    argvalues=[
+        "1",
+    ],
+)
+def test_create_values(test_client, delete_value):
     """
-    Test that the values are returned correctly
-    Cool pytest things here:
-    1) New Test new setup unlike the unit test module that supports
-        def setUp(self):
-        and
-        @classmethod
-        def setUpClass(cls):
-        ...
-        This helps us not worry about side effects in tests
+    Fixtures can be used just for clean up
+    @pytest.fixture
+    def clean_up_my_test():
+        yield
+        clean up code
     """
-    response = test_client.get("/")
+    response = test_client.post("/", json={"id": "1", "value": "test1"})
     assert response.status_code == 200
-    assert response.json() == {"values": bulk_insert_some_values}
 
 
 @pytest.mark.parametrize(
@@ -104,6 +162,7 @@ def test_get_values(test_client, bulk_insert_some_values):
         "2",
         "3",
         pytest.param("notAnId", marks=pytest.mark.xfail),
+        # "notAnId",  # uncomment failing test case
     ],
 )
 def test_delete_values(
@@ -116,7 +175,8 @@ def test_delete_values(
     Cool pytest things here:
     we can mark a param as expected to fail pytest.param("notAnId", marks=pytest.mark.xfail)
     we can have costume parameters from @pytest.mark.parametrize
-    And then we will have output per a parameter no more
+    And then we will have output per a parameter
+    No more:
     for test_case in test_cases:
         self.assertTrue(statement)
     we can also just know what test case failed
@@ -156,19 +216,22 @@ def test_long_running_task_no_mock(test_client):
     Cool pytest things here:
     1) The mock is not used here and it is easy to mock or not mock something depending on the needs
     """
+    start_time = time.time()
     response = test_client.get("/long_running_task/", params={"num_secs": 1})
+    end_time = time.time()
+    assert end_time - start_time > 1, "The task took less than 1 second"
     assert response.status_code == 200
 
 
+@pytest.mark.xfail  # comment this to see the test pass
+# uncomment autouse=True in fixture
 def test_show_auto_use(test_client):
     """
-    Cool pytest things here:
-    1) As you can see freeze the time mock is auto used here and time is frozen
-    datetime.now() == the response
+    We can also use the freeze_the_time fixture to get the value the fixture returns
     """
     response = test_client.get("/get_datetime_now/")
     assert response.status_code == 200
-    assert response.json() == datetime.now().isoformat()
+    assert response.json() == datetime(2020, 1, 1, 0, 0, 0).isoformat()
 
 
 def test_show_auto_use_2(test_client, freeze_the_time):
@@ -185,7 +248,7 @@ async def test_async_route(test_client):
     """
     Cool pytest things here:
     !) So by using the pytest.mark.asyncio we can mark the test as async
-    and can call an async route we delagate the Async loop orechastration to pytest-asyncio
+    and can call an async route we delegate the Async loop orchestration to pytest-asyncio
     """
     response = test_client.get("/async_route/")
     assert response.status_code == 200

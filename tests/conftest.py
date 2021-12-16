@@ -73,6 +73,32 @@ def add_value(test_client, request) -> dict[str, str]:
     assert response.status_code in [200, 404]
 
 
+@pytest.fixture(
+    params=[
+        {"id": "1", "value": "test1"},
+        {"id": "2", "value": "test1"},
+    ],
+)
+def add_value_fixture_params(test_client, request) -> dict[str, str]:
+    payload = request.param
+    response = test_client.post(
+        "/",
+        json={"value": payload["value"], "id": payload["id"]},
+    )
+    assert response.status_code == 200
+    yield payload
+    response = test_client.delete(f'/{payload["id"]}')
+    assert response.status_code in [200, 404]
+
+
+@pytest.fixture
+def delete_value(test_client, request) -> None:
+    payload = request.param
+    yield
+    response = test_client.delete(f"/{payload}")
+    assert response.status_code in [200, 404]
+
+
 @pytest.fixture
 def bulk_insert_some_values(test_client) -> list[dict[str, str]]:
     payloads = []
@@ -102,10 +128,8 @@ def mock_sleep(mocker: pytest_mock.MockerFixture):
     mocker.resetall()
 
 
-@pytest.fixture(
-    scope="session",
-    autouse=True,
-)
+@pytest.fixture
+# @pytest.fixture(autouse=True)
 def freeze_the_time() -> datetime:
     """
     This is a session fixture that is autouse=True.
